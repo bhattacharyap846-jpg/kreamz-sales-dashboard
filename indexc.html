@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kreamz Sales Target vs Achievement Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS for Excel & CSV Reading/Writing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        .kreamz-pink { background-color: #ff3366; }
+        .kreamz-btn { background-color: #ff3366; }
+        .kreamz-btn:hover { background-color: #e62e5c; }
+    </style>
+</head>
+<body class="bg-rose-50/50 text-slate-800 font-sans min-h-screen">
+
+    <!-- Top Navigation Header -->
+    <nav class="kreamz-pink text-white shadow-md py-3 px-6 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-11 h-11 bg-white rounded-full p-1 shadow flex items-center justify-center font-black text-rose-600 text-xl">K</div>
+                <div>
+                    <h1 class="text-xl font-black tracking-wide">KREAMZ DASHBOARD</h1>
+                    <p class="text-xs text-rose-100">Cakes & More - Consolidated Sales Portal</p>
+                </div>
+            </div>
+            <span class="text-xs bg-white/20 px-3 py-1 rounded-full text-white font-medium">Dual-Sales Engine</span>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- Welcome Banner -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-rose-100 mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center font-black text-rose-600 text-2xl border-2 border-rose-200">K</div>
+                <div class="text-left">
+                    <h2 class="text-2xl font-black text-slate-900 tracking-tight">Kreamz Confectionery Automated Sales Portal</h2>
+                    <p class="text-slate-500 text-sm mt-1">Upload <span class="font-bold text-rose-600">Target File</span> and <span class="font-bold text-rose-600">Both Net Sales Files</span> to consolidate performance analytics.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload Section (3 File Slots) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Target File -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-rose-100">
+                <label class="block text-sm font-bold text-slate-700 mb-2 flex items-center">
+                    <span class="bg-rose-100 text-rose-600 rounded-full w-6 h-6 flex items-center justify-center text-xs mr-2">1</span>
+                    Target File (.xlsx / .csv)
+                </label>
+                <input type="file" id="targetFile" class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-rose-50 file:text-rose-600 hover:file:bg-rose-100 cursor-pointer">
+                <p class="text-[11px] text-slate-400 mt-2">Example: July 2026 Target.xlsx</p>
+            </div>
+
+            <!-- Sales File 1 -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-rose-100">
+                <label class="block text-sm font-bold text-slate-700 mb-2 flex items-center">
+                    <span class="bg-emerald-100 text-emerald-600 rounded-full w-6 h-6 flex items-center justify-center text-xs mr-2">2</span>
+                    Cherry App (.xlsx / .csv)
+                </label>
+                <input type="file" id="salesFile1" class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-600 hover:file:bg-emerald-100 cursor-pointer">
+                <p class="text-[11px] text-slate-400 mt-2">Example: July net sale.xlsx</p>
+            </div>
+
+            <!-- Sales File 2 -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-rose-100">
+                <label class="block text-sm font-bold text-slate-700 mb-2 flex items-center">
+                    <span class="bg-blue-100 text-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-xs mr-2">3</span>
+                    Compact App (.xlsx / .csv)
+                </label>
+                <input type="file" id="salesFile2" class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                <p class="text-[11px] text-slate-400 mt-2">Example: Shop_Sales_And_Return...xlsx</p>
+            </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="text-center mb-10">
+            <button id="generateBtn" onclick="processDashboard()" class="kreamz-btn text-white font-bold py-3.5 px-10 rounded-2xl shadow-lg shadow-rose-200 transition-all duration-200 text-base">
+                Consolidate & Generate Dashboard
+            </button>
+        </div>
+
+        <!-- Dashboard Results Section -->
+        <div id="dashboardResult" class="hidden space-y-8">
+            
+            <!-- KPI Overview Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Target Sales</p>
+                    <p id="kpiTarget" class="text-2xl font-black text-slate-800 mt-2">₹0</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Consolidated Net Sales</p>
+                    <p id="kpiSales" class="text-2xl font-black text-rose-600 mt-2">₹0</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Achievement Rate</p>
+                    <p id="kpiRate" class="text-2xl font-black text-emerald-600 mt-2">0%</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Required Sales / Day</p>
+                    <p id="kpiPerDay" class="text-2xl font-black text-amber-500 mt-2">₹0 / Day</p>
+                </div>
+            </div>
+
+            <!-- TOP 10 PERFORMING STORES SECTION -->
+            <div class="bg-white p-6 rounded-2xl border border-rose-100 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl">🏆</span>
+                        <h3 class="text-lg font-black text-slate-900">Top 10 Stores Achieving Target</h3>
+                    </div>
+                    <span class="text-xs bg-emerald-100 text-emerald-700 font-bold px-3 py-1 rounded-full">Ranked by Achievement %</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" id="top10Container">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Table Header Bar -->
+            <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-rose-100 shadow-sm">
+                <h3 class="text-base font-bold text-slate-800">All Stores Performance Summary</h3>
+                <button onclick="downloadExcelMobile()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2.5 px-6 rounded-xl shadow transition">
+                    Download Formatted Excel (.xlsx)
+                </button>
+            </div>
+
+            <!-- Data Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-rose-100 overflow-x-auto">
+                <table class="w-full text-sm text-left text-slate-600">
+                    <thead class="text-xs uppercase bg-rose-50 text-rose-900 font-bold border-b border-rose-100">
+                        <tr>
+                            <th class="py-3.5 px-4 text-center">Shop ID</th>
+                            <th class="py-3.5 px-4">Shop Name (Location)</th>
+                            <th class="py-3.5 px-4">District</th>
+                            <th class="py-3.5 px-4">ASM / AFE</th>
+                            <th class="py-3.5 px-4 text-right">Target Amount</th>
+                            <th class="py-3.5 px-4 text-right">Actual Net Sales</th>
+                            <th class="py-3.5 px-4 text-right">Achievement %</th>
+                            <th class="py-3.5 px-4 text-right">Shortfall</th>
+                            <th class="py-3.5 px-4 text-right">Req. Sales / Day</th>
+                            <th class="py-3.5 px-4 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-rose-50">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let processedData = [];
+
+        function formatCurrency(num) {
+            return '₹' + Number(num || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function getValue(row, possibleKeys) {
+            for (let searchKey of possibleKeys) {
+                for (let key in row) {
+                    if (key.trim().toUpperCase() === searchKey.toUpperCase()) {
+                        return row[key];
+                    }
+                }
+            }
+            return null;
+        }
+
+        function normalizeStr(str) {
+            return (str || '')
+.toString()
+.toUpperCase()
+.replace(/AND/g,'&')
+.replace(/\s+/g,' ')
+.trim()
+.replace(/[^A-Z0-9]/g, '');
+        }
+
+        async function parseSheetRowsSmart(file) {
+            if (!file) return [];
+            const buffer = await file.arrayBuffer();
+            const wb = XLSX.read(buffer);
+            let combinedJson = [];
+
+            for (let sheetName of wb.SheetNames) {
+                const sheet = wb.Sheets[sheetName];
+                // First try normal parsing
+                let data = XLSX.utils.sheet_to_json(sheet);
+                
+                // Check if 'shop' or 'shop id' or 'net taxable' is in the first row keys
+                let hasKey = data.length > 0 && (
+                    getValue(data[0], ['Shop', 'Shop ID', 'shop', 'shop id', 'Net Taxable', 'net taxable'])
+                );
+
+                // If not found, try range skipping (for title headers)
+                if (!hasKey) {
+                    for (let skip = 1; skip <= 4; skip++) {
+                        let testData = XLSX.utils.sheet_to_json(sheet, { range: skip });
+                        if (testData.length > 0 && getValue(testData[0], ['Shop', 'Shop ID', 'shop', 'shop id', 'Net Taxable', 'net taxable'])) {
+                            data = testData;
+                            break;
+                        }
+                    }
+                }
+
+                if (data.length > 0) {
+                    combinedJson = combinedJson.concat(data);
+                }
+            }
+            return combinedJson;
+        }
+
+        async function processDashboard() {
+            const targetInput = document.getElementById('targetFile').files[0];
+            const salesInput1 = document.getElementById('salesFile1').files[0];
+            const salesInput2 = document.getElementById('salesFile2').files[0];
+
+            if (!targetInput || (!salesInput1 && !salesInput2)) {
+                alert('Please select the Target File and at least one Sales File!');
+                return;
+            }
+
+            // Read Target File
+            const targetJson = await parseSheetRowsSmart(targetInput);
+
+            // Read Both Sales Files
+            const salesJson1 = await parseSheetRowsSmart(salesInput1);
+            const salesJson2 = await parseSheetRowsSmart(salesInput2);
+            const allSalesRows = salesJson1.concat(salesJson2);
+
+            const salesById = {};
+            const salesByShopLoc = {};
+            let grandOutletSalesSum = 0;
+
+            allSalesRows.forEach(row => {
+                const cat = (getValue(row, ['Category', 'CAT', 'product mrp group name', 'GROUP']) || '').toString().trim().toUpperCase();
+                
+                // Filter OUTLET / FRANCHISEE / empty category
+                if (cat === 'OUTLET' || cat === 'FRANCHISEE' || cat === '') {
+                    const shopId = getValue(row, ['Shop ID', 'ID', 'Shop_ID', 'shop id']);
+                    const shopName = (getValue(row, ['Shop', 'Shop Name', 'shop']) || '').toString().trim();
+                    const locName = (getValue(row, ['Location', 'Loc', 'location']) || '').toString().trim();
+                    
+                    const netTaxableVal = getValue(row, ['Net Taxable', 'Net Taxable Amt', 'Taxable Amt', 'Net Sales', 'net taxable', 'Net Amt', 'net amt']);
+                    const netTaxable = parseFloat(netTaxableVal || 0);
+                    
+                    if (netTaxable > 0) {
+                        grandOutletSalesSum += netTaxable;
+
+                        if (shopId) {
+                            salesById[shopId] = (salesById[shopId] || 0) + netTaxable;
+                        }
+                        const dualKey = normalizeStr(shopName) + '_' + normalizeStr(locName);
+                        salesByShopLoc[dualKey] = (salesByShopLoc[dualKey] || 0) + netTaxable;
+                    }
+                }
+            });
+
+            const nameCorrections = {
+                "S.P.ENTERPRISE": "S P ENTERPRISE",
+                "TAPAS BAKERY & CONFECTIONERIES": "TAPAS BAKERY AND CONFECTIONERIES",
+                "SNS ENTERPRISE": "SNS ENTERPRISES",
+                "DURGA RAM STORE": "DURGA RAM STORES",
+                "MIRA CONFECTIONERIES": "MIRA CONFECTIONERY",
+                "BONNY'S BAKERY": "BONNYS BAKERY",
+                "BALLYGUNGE CAKE SHOP": "BALLYGUNJE CAKE SHOP"
+            };
+
+            let totalTarget = 0;
+            let totalShortfall = 0;
+            processedData = [];
+
+            targetJson.forEach(row => {
+                const shopId = getValue(row, ['Shop ID', 'ID', 'Shop_ID', 'shop id']) || '';
+                const rawShop = (getValue(row, ['Shop', 'Shop Name', 'shop']) || '').toString().trim();
+                const location = (getValue(row, ['Location', 'Loc', 'location']) || '').toString().trim();
+                const district = getValue(row, ['District', 'district']) || '';
+                const afeAsm = getValue(row, ['AFE/ASM', 'ASM / AFE', 'AFE', 'ASM', 'asm name']) || 'N/A';
+                
+                let targetVal = getValue(row, ['Target', 'Target Amount', 'TARGET', 'July Target', 'target']);
+                const targetAmt = parseFloat(targetVal || 0);
+
+                if (!rawShop && !targetAmt) return;
+
+                const lookupShop = nameCorrections[rawShop] || rawShop;
+                const dualKey = normalizeStr(lookupShop) + '_' + normalizeStr(location);
+                
+                // Match only by Shop Name + Location to avoid incorrect Shop ID mapping
+                let actualSales = salesByShopLoc[dualKey] || 0;
+
+                const rate = targetAmt > 0 ? (actualSales / targetAmt) : 0;
+                const shortfall = Math.max(0, targetAmt - actualSales);
+                const reqPerDay = shortfall / 12; // 12 remaining days
+                const status = actualSales >= targetAmt ? "Target Achieved" : "Pending";
+
+                totalTarget += targetAmt;
+                totalShortfall += shortfall;
+
+                processedData.push({
+                    shopId,
+                    combinedName: location ? `${rawShop} (${location})` : rawShop,
+                    rawShop,
+                    location,
+                    district,
+                    afeAsm,
+                    targetAmt,
+                    actualSales,
+                    rate,
+                    shortfall,
+                    reqPerDay,
+                    status
+                });
+            });
+
+            // Update KPIs
+            document.getElementById('kpiTarget').innerText = formatCurrency(totalTarget);
+            document.getElementById('kpiSales').innerText = formatCurrency(grandOutletSalesSum);
+            document.getElementById('kpiRate').innerText = (totalTarget > 0 ? (grandOutletSalesSum / totalTarget * 100).toFixed(2) : 0) + '%';
+            document.getElementById('kpiPerDay').innerText = formatCurrency((totalTarget - grandOutletSalesSum) / 12) + ' / Day';
+
+            // TOP 10 STORES LOGIC (Sorted by Achievement Rate descending)
+            const sortedData = [...processedData].sort((a, b) => b.rate - a.rate);
+            const top10 = sortedData.slice(0, 10);
+
+            const top10Container = document.getElementById('top10Container');
+            top10Container.innerHTML = '';
+
+            top10.forEach((r, idx) => {
+                const card = document.createElement('div');
+                card.className = "p-4 rounded-xl border border-rose-100 bg-rose-50/40 shadow-xs flex flex-col justify-between";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-xs font-black px-2 py-0.5 rounded-full bg-white text-rose-600 shadow-xs">#${idx + 1}</span>
+                            <span class="text-xs font-black text-emerald-600">${(r.rate * 100).toFixed(1)}%</span>
+                        </div>
+                        <p class="font-bold text-slate-900 text-xs truncate" title="${r.combinedName}">${r.combinedName}</p>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-rose-200/50 flex justify-between text-[11px]">
+                        <span class="text-slate-500">Sales:</span>
+                        <span class="font-bold text-slate-800">${formatCurrency(r.actualSales)}</span>
+                    </div>
+                `;
+                top10Container.appendChild(card);
+            });
+
+            // Render Full Table Rows
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            processedData.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-rose-50/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-center font-medium text-slate-500">${r.shopId}</td>
+                    <td class="py-3 px-4 font-bold text-slate-800">${r.combinedName}</td>
+                    <td class="py-3 px-4 text-slate-600">${r.district}</td>
+                    <td class="py-3 px-4 text-slate-600">${r.afeAsm}</td>
+                    <td class="py-3 px-4 text-right font-semibold text-slate-900">${formatCurrency(r.targetAmt)}</td>
+                    <td class="py-3 px-4 text-right font-bold text-rose-600">${formatCurrency(r.actualSales)}</td>
+                    <td class="py-3 px-4 text-right font-bold text-emerald-600">${(r.rate * 100).toFixed(2)}%</td>
+                    <td class="py-3 px-4 text-right font-medium text-slate-700">${formatCurrency(r.shortfall)}</td>
+                    <td class="py-3 px-4 text-right font-semibold text-amber-600">${formatCurrency(r.reqPerDay)}</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${r.status === 'Target Achieved' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                            ${r.status}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('dashboardResult').classList.remove('hidden');
+        }
+
+        function sanitizeSheetName(name, usedNames) {
+            // Excel sheet name rules: max 31 chars, no : \ / ? * [ ]
+            let clean = String(name).replace(/[:\\\/\?\*\[\]]/g, '-').trim();
+            if (!clean) clean = 'N-A';
+            clean = clean.substring(0, 31);
+            // ensure uniqueness (case-insensitive, Excel requirement)
+            let base = clean;
+            let i = 2;
+            while (usedNames.has(clean.toLowerCase())) {
+                const suffix = ` (${i})`;
+                clean = base.substring(0, 31 - suffix.length) + suffix;
+                i++;
+            }
+            usedNames.add(clean.toLowerCase());
+            return clean;
+        }
+
+        function downloadExcelMobile() {
+            if (!processedData.length) return;
+            const header = ["Shop ID", "Shop Name (Location)", "District", "ASM / AFE", "Target Amount", "Actual Net Sales", "Achievement Rate (%)", "Shortfall", "Required Sales / Day", "Status"];
+
+            const wb = XLSX.utils.book_new();
+            const usedNames = new Set();
+
+            // Sheet 1: All shops combined (overview)
+            const allData = [header];
+            processedData.forEach(r => {
+                allData.push([r.shopId, r.combinedName, r.district, r.afeAsm, r.targetAmt, r.actualSales, r.rate, r.shortfall, r.reqPerDay, r.status]);
+            });
+            const wsAll = XLSX.utils.aoa_to_sheet(allData);
+            XLSX.utils.book_append_sheet(wb, wsAll, sanitizeSheetName("All ASM-AFE", usedNames));
+
+            // Group rows by ASM/AFE
+            const groups = {};
+            processedData.forEach(r => {
+                const key = r.afeAsm || 'N/A';
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(r);
+            });
+
+            // One sheet per ASM/AFE
+            Object.keys(groups).sort().forEach(key => {
+                const wsData = [header];
+                groups[key].forEach(r => {
+                    wsData.push([r.shopId, r.combinedName, r.district, r.afeAsm, r.targetAmt, r.actualSales, r.rate, r.shortfall, r.reqPerDay, r.status]);
+                });
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                XLSX.utils.book_append_sheet(wb, ws, sanitizeSheetName(key, usedNames));
+            });
+
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = "Kreamz_Consolidated_Sales_Report.xlsx";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
